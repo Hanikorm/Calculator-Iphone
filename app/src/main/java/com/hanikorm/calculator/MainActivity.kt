@@ -13,166 +13,169 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         val display = findViewById<TextView>(R.id.display)
 
-        // Инициализация кнопок
         val buttonResult = findViewById<Button>(R.id.buttonOtv)
         buttonResult.setOnClickListener {
-            onButtonResulClicked(display)
+            onButtonResultClicked()
         }
 
         val buttonPlus = findViewById<Button>(R.id.buttonPlus)
         buttonPlus.setOnClickListener {
-            onButtonWithSignClicked("+", display)
+            onButtonWithSignClicked("+")
         }
 
         val buttonMinus = findViewById<Button>(R.id.buttonMinus)
         buttonMinus.setOnClickListener {
-            onButtonWithSignClicked("-", display)
+            onButtonWithSignClicked("-")
         }
 
-        val buttonDelete = findViewById<Button>(R.id.buttondivide)
-        buttonDelete.setOnClickListener {
-            onButtonWithSignClicked("/", display)
+        val buttonDivide = findViewById<Button>(R.id.buttondivide)
+        buttonDivide.setOnClickListener {
+            onButtonWithSignClicked("/")
         }
 
         val buttonMultiply = findViewById<Button>(R.id.buttonmultiply)
         buttonMultiply.setOnClickListener {
-            onButtonWithSignClicked("*", display)
+            onButtonWithSignClicked("*")
         }
 
         val buttonPlusOrMinus = findViewById<Button>(R.id.buttonplusandminus)
         buttonPlusOrMinus.setOnClickListener {
-            onPlusOrMinusButtonClicked(display)
+            onPlusOrMinusButtonClicked()
         }
 
         val buttonComma = findViewById<Button>(R.id.buttonzp)
         buttonComma.setOnClickListener {
-            onCommaButtonClicked(display)
+            onCommaButtonClicked()
         }
 
         val buttonAC = findViewById<Button>(R.id.buttonAC)
         buttonAC.setOnClickListener {
-            display.text = "0"
-            temporaryValue = "0"
-            firstValueEntered = ""
-            signSelectionVariable = ""
+            resetCalculator(display)
         }
 
-        val buttonPercent = findViewById<Button>(R.id.buttonpercent)
-        buttonPercent.setOnClickListener {
-            onButtonPercentClicked(display)
+        // Кнопки цифр
+        val buttonNumber0 = findViewById<Button>(R.id.buttonnull)
+        buttonNumber0.setOnClickListener {
+            onNumberButtonClicked("0")
         }
 
-        val numberButtons = mapOf(
-            R.id.buttonnumber9 to "9",
-            R.id.buttonNumber8 to "8",
-            R.id.buttonNumber7 to "7",
-            R.id.buttonNumber6 to "6",
-            R.id.buttonNumber5 to "5",
-            R.id.buttonNumber4 to "4",
-            R.id.buttonNumber3 to "3",
-            R.id.buttonNumber2 to "2",
-            R.id.buttonNumber1 to "1",
-            R.id.buttonnull to "0"
-        )
+        val buttonNumber1 = findViewById<Button>(R.id.buttonNumber1)
+        buttonNumber1.setOnClickListener {
+            onNumberButtonClicked("1")
+        }
 
-        numberButtons.forEach { (buttonId, number) ->
-            findViewById<Button>(buttonId).setOnClickListener {
-                onNumberButtonClicked(number, display)
-            }
+        val buttonNumber2 = findViewById<Button>(R.id.buttonNumber2)
+        buttonNumber2.setOnClickListener {
+            onNumberButtonClicked("2")
+        }
+
+        val buttonNumber3 = findViewById<Button>(R.id.buttonNumber3)
+        buttonNumber3.setOnClickListener {
+            onNumberButtonClicked("3")
+        }
+
+        val buttonNumber4 = findViewById<Button>(R.id.buttonNumber4)
+        buttonNumber4.setOnClickListener {
+            onNumberButtonClicked("4")
+        }
+
+        val buttonNumber5 = findViewById<Button>(R.id.buttonNumber5)
+        buttonNumber5.setOnClickListener {
+            onNumberButtonClicked("5")
+        }
+
+        val buttonNumber6 = findViewById<Button>(R.id.buttonNumber6)
+        buttonNumber6.setOnClickListener {
+            onNumberButtonClicked("6")
+        }
+
+        val buttonNumber7 = findViewById<Button>(R.id.buttonNumber7)
+        buttonNumber7.setOnClickListener {
+            onNumberButtonClicked("7")
+        }
+
+        val buttonNumber8 = findViewById<Button>(R.id.buttonNumber8)
+        buttonNumber8.setOnClickListener {
+            onNumberButtonClicked("8")
+        }
+
+        val buttonNumber9 = findViewById<Button>(R.id.buttonnumber9)
+        buttonNumber9.setOnClickListener {
+            onNumberButtonClicked("9")
         }
     }
 
-    private fun onNumberButtonClicked(number: String, display: TextView) {
-        if (temporaryValue.length < 9) {
-            temporaryValue = if (temporaryValue == "0" && number == "0") {
-                "0"
-            } else if ((temporaryValue == "0" || temporaryValue == "-0") && number != "0") {
-                if (temporaryValue.startsWith("-")) {
-                    "-$number"
-                } else {
-                    number
-                }
-            } else {
-                temporaryValue + number
-            }
+    private fun onNumberButtonClicked(number: String) {
+        val display = findViewById<TextView>(R.id.display)
+        if (temporaryValue == "0" || temporaryValue == "-0") {
+            temporaryValue = if (temporaryValue == "-0") "-$number" else number
+        } else {
+            temporaryValue += number
         }
         display.text = temporaryValue
     }
 
-    private fun onCommaButtonClicked(display: TextView) {
+    private fun onCommaButtonClicked() {
         if (!temporaryValue.contains(".")) {
             temporaryValue += "."
-            display.text = temporaryValue
         }
+        val display = findViewById<TextView>(R.id.display)
+        display.text = temporaryValue
     }
 
-    private fun onButtonPercentClicked(display: TextView) {
-        val firstValue = firstValueEntered.toDoubleOrNull()
-        val secondValue = temporaryValue.toDoubleOrNull()
-
-        if (firstValue != null && secondValue != null) {
-            temporaryValue = when (signSelectionVariable) {
-                "+" -> (firstValue + (firstValue * secondValue / 100)).toString()
-                "-" -> (firstValue - (firstValue * secondValue / 100)).toString()
-                "*" -> (firstValue * (secondValue / 100)).toString()
-                "/" -> if (secondValue != 0.0) {
-                    (firstValue / (secondValue / 100)).toString()
-                } else {
-                    "Ошибка"
-                }
-                else -> "Ошибка"
-            }
-            display.text = formatNumber(temporaryValue)
-        } else if (secondValue != null) {
-            temporaryValue = (secondValue / 100).toString()
-            display.text = formatNumber(temporaryValue)
-        } else {
-            display.text = "Ошибка"
-        }
-    }
-
-    private fun onPlusOrMinusButtonClicked(display: TextView) {
+    private fun onPlusOrMinusButtonClicked() {
+        val display = findViewById<TextView>(R.id.display)
         temporaryValue = if (temporaryValue.startsWith("-")) {
-            temporaryValue.removePrefix("-")
+            temporaryValue.drop(1)
         } else {
             "-$temporaryValue"
         }
         display.text = temporaryValue
     }
 
-    private fun onButtonWithSignClicked(sign: String, display: TextView) {
-        firstValueEntered = temporaryValue
-        temporaryValue = "0"
-        signSelectionVariable = sign
+    private fun onButtonWithSignClicked(sign: String) {
+        if (temporaryValue.isNotEmpty()) {
+            firstValueEntered = temporaryValue
+            signSelectionVariable = sign
+            temporaryValue = "0"
+        }
     }
 
-    private fun onButtonResulClicked(display: TextView) {
-        val secondValue = temporaryValue.toDoubleOrNull()
-        val firstValue = firstValueEntered.toDoubleOrNull()
-
-        if (firstValue == null || secondValue == null) {
-            display.text = "Ошибка"
-            return
-        }
-
-        temporaryValue = when (signSelectionVariable) {
-            "+" -> (firstValue + secondValue).toString()
-            "-" -> (firstValue - secondValue).toString()
-            "*" -> (firstValue * secondValue).toString()
-            "/" -> if (secondValue != 0.0) {
-                (firstValue / secondValue).toString()
-            } else {
-                "Ошибка"
+    private fun onButtonResultClicked() {
+        val display = findViewById<TextView>(R.id.display)
+        if (firstValueEntered.isNotEmpty() && signSelectionVariable.isNotEmpty()) {
+            val result = when (signSelectionVariable) {
+                "+" -> firstValueEntered.toDouble() + temporaryValue.toDouble()
+                "-" -> firstValueEntered.toDouble() - temporaryValue.toDouble()
+                "*" -> firstValueEntered.toDouble() * temporaryValue.toDouble()
+                "/" -> {
+                    if (temporaryValue.toDouble() == 0.0) {
+                        display.text = "Ошибка"
+                        return
+                    } else {
+                        firstValueEntered.toDouble() / temporaryValue.toDouble()
+                    }
+                }
+                else -> 0.0
             }
-            else -> "Ошибка"
+            temporaryValue = result.toString()
+            display.text = formatNumber(temporaryValue)
+            signSelectionVariable = ""
         }
-        display.text = formatNumber(temporaryValue)
+    }
+
+    private fun resetCalculator(display: TextView) {
+        display.text = "0"
+        temporaryValue = "0"
+        firstValueEntered = ""
+        signSelectionVariable = ""
     }
 
     private fun formatNumber(value: String): String {
-        val number = value.toDoubleOrNull() ?: return "Ошибка"
+        val number = value.toDouble()
         return if (number == number.toLong().toDouble()) {
             number.toLong().toString()
         } else {
