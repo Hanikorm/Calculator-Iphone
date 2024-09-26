@@ -6,9 +6,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
-    private var temporaryValue = "0"
-    private var firstValueEntered = ""
-    private var signSelectionVariable = ""
+    private var temporaryValue = "0" // Текущее вводимое значение
+    private var firstValueEntered = "" // Первое число перед операцией
+    private var signSelectionVariable = "" // Знак операции
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +54,11 @@ class MainActivity : AppCompatActivity() {
         val buttonAC = findViewById<Button>(R.id.buttonAC)
         buttonAC.setOnClickListener {
             resetCalculator(display)
+        }
+
+        val buttonPercent = findViewById<Button>(R.id.buttonpercent)
+        buttonPercent.setOnClickListener {
+            onButtonPercentClicked()
         }
 
         // Кнопки цифр
@@ -141,6 +146,22 @@ class MainActivity : AppCompatActivity() {
             firstValueEntered = temporaryValue
             signSelectionVariable = sign
             temporaryValue = "0"
+        }
+    }
+
+    private fun onButtonPercentClicked() {
+        val display = findViewById<TextView>(R.id.display)
+        // Если есть операция (например, 100 + 20%)
+        if (firstValueEntered.isNotEmpty() && signSelectionVariable.isNotEmpty()) {
+            val secondValue = temporaryValue.toDoubleOrNull() ?: return
+            val percentValue = (firstValueEntered.toDouble() * secondValue) / 100
+            temporaryValue = percentValue.toString()
+            display.text = temporaryValue
+        } else {
+            // Если просто вводится процент (например, 50%)
+            val value = temporaryValue.toDoubleOrNull() ?: return
+            temporaryValue = (value / 100).toString()
+            display.text = formatNumber(temporaryValue)
         }
     }
 
