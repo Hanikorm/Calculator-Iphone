@@ -114,10 +114,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun onNumberButtonClicked(number: String) {
         val display = findViewById<TextView>(R.id.display)
-        if (temporaryValue == "0" || temporaryValue == "-0") {
-            temporaryValue = if (temporaryValue == "-0") "-$number" else number
-        } else {
-            temporaryValue += number
+        if (temporaryValue.length < 9) {
+            if (temporaryValue == "0" || temporaryValue == "-0") {
+                temporaryValue = if (temporaryValue == "-0") "-$number" else number
+            } else {
+                temporaryValue += number
+            }
         }
         display.text = temporaryValue
     }
