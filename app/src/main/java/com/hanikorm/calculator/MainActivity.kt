@@ -68,6 +68,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.buttonzp).setOnClickListener { onCommaButtonClicked() }
         findViewById<Button>(R.id.buttonAC).setOnClickListener { resetCalculator() }
         findViewById<Button>(R.id.buttonpercent).setOnClickListener { onButtonPercentClicked() }
+        findViewById<TextView>(R.id.display).setOnClickListener{ onClickDelLast() }
         //функция кнопок с числами
         setupNumberButtons()
     }
@@ -110,11 +111,27 @@ class MainActivity : AppCompatActivity() {
             calculatorViewModel.temporaryValue.value = updatedValue
         }
     }
+    /**
+     * Удаляет последний символ из временного значения на дисплее.
+     */
+    private fun onClickDelLast() {
+        // Проверяем, если временное значение не пустое
+        if (calculatorViewModel.temporaryValue.value?.isNotEmpty() == true) {
+            // Удаляем последний символ из временного значения
+            val currentValue = calculatorViewModel.temporaryValue.value ?: ""
+            calculatorViewModel.temporaryValue.value = currentValue.dropLast(1)
+
+            // Если временное значение стало пустым, устанавливаем его в "0"
+            if (calculatorViewModel.temporaryValue.value.isNullOrEmpty()) {
+                calculatorViewModel.temporaryValue.value = "0"
+            }
+        }
+    }
     // Метод для обработки нажатия на кнопку запятой
     private fun onCommaButtonClicked() {
         val currentValue = calculatorViewModel.temporaryValue.value ?: "0"
         // Если в числе ещё нет запятой, добавляем её
-        if (!currentValue.contains(".")) {
+        if (!currentValue.contains(".")&& currentValue.length > 9) {
             calculatorViewModel.temporaryValue.value = "$currentValue."
         }
     }
@@ -131,8 +148,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onButtonWithSignClicked(sign: String) {
-        calculatorViewModel.firstValueEntered.value = calculatorViewModel.temporaryValue.value
-        calculatorViewModel.signSelectionVariable.value = sign
+        // Проверяем, если временное значение не пустое, сохраняем его как первое значение
+        if (calculatorViewModel.temporaryValue.value?.isNotEmpty() == true) {
+            // Если уже есть первое значение и знак операции, просто заменяем знак
+            if (calculatorViewModel.firstValueEntered.value?.isNotEmpty() == true &&
+                calculatorViewModel.signSelectionVariable.value?.isNotEmpty() == true) {
+                calculatorViewModel.signSelectionVariable.value = sign
+            } else {
+                // Если первое значение пустое, сохраняем текущее временное значение
+                calculatorViewModel.firstValueEntered.value = calculatorViewModel.temporaryValue.value
+                calculatorViewModel.signSelectionVariable.value = sign
+            }
+        }
+
+        // Сбрасываем временное значение для следующего ввода
         calculatorViewModel.temporaryValue.value = "0"
     }
 
@@ -158,10 +187,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onButtonResultClicked() {
+        // Проверяем, есть ли первое значение и знак
+        if (calculatorViewModel.firstValueEntered.value.isNullOrEmpty() || calculatorViewModel.signSelectionVariable.value.isNullOrEmpty()) {
+            return // Если нет, выходим из метода
+        }
+        // Преобразуем значения в числа
         val firstValue = calculatorViewModel.firstValueEntered.value?.toDoubleOrNull() ?: return
         val secondValue = calculatorViewModel.temporaryValue.value?.toDoubleOrNull() ?: return
         val sign = calculatorViewModel.signSelectionVariable.value ?: return
-
+        // Выполняем вычисление в зависимости от выбранного знака
         val result = when (sign) {
             "+" -> firstValue + secondValue
             "-" -> firstValue - secondValue
@@ -172,7 +206,8 @@ class MainActivity : AppCompatActivity() {
             }
             else -> return
         }
-        calculatorViewModel.temporaryValue.value = result.toString()
+        // Обновляем временное значение результатом
+        calculatorViewModel.temporaryValue.value = formatNumber(result.toString())
     }
 
     private fun resetCalculator() {
@@ -181,12 +216,17 @@ class MainActivity : AppCompatActivity() {
         calculatorViewModel.signSelectionVariable.value = ""
     }
 
+    /**
+     * Форматирует число, чтобы избавиться от лишних нулей после запятой.
+     * @param value Число в виде строки, которое нужно отформатировать.
+     * @return Отформатированное значение в виде строки.
+     */
     private fun formatNumber(value: String): String {
         val number = value.toDouble()
-        return if (number == number.toLong().toDouble()) {
-            number.toLong().toString()
+        return if (number % 1 == 0.0) {
+            number.toInt().toString() // Преобразуем в целое число, если оно целое
         } else {
-            String.format("%.10f", number).trimEnd('0').trimEnd('.')
+            String.format("%.10f", number).trimEnd('0').trimEnd('.') // Форматируем с 10 знаками после запятой и убираем лишние нули
         }
     }
 }
