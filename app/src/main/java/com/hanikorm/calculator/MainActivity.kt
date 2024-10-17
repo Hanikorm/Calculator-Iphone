@@ -131,7 +131,7 @@ class MainActivity : AppCompatActivity() {
     private fun onCommaButtonClicked() {
         val currentValue = calculatorViewModel.temporaryValue.value ?: "0"
         // Если в числе ещё нет запятой, добавляем её
-        if (!currentValue.contains(".")&& currentValue.length > 9) {
+        if (!currentValue.contains(".")&& currentValue.length <= 9) {
             calculatorViewModel.temporaryValue.value = "$currentValue."
         }
     }
