@@ -4,194 +4,181 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-
+import androidx.lifecycle.Observer
+import androidx.activity.viewModels
+import java.math.BigDecimal
+import java.math.RoundingMode
+/**
+ * класс основной активности калькулятора
+ * @autor hanikorm
+ * @version 0.11
+ */
 class MainActivity : AppCompatActivity() {
-    private var temporaryValue = "0"
-    private var firstValueEntered = ""
-    private var signSelectionVariable = ""
-
+    /**
+     * ViewModel для хранения данных калькулятора.
+     * ViewModel помогает сохранить данные при изменении конфигурации (например, поворот экрана).
+     */
+    private val calculatorViewModel: CalculatorViewModel by viewModels()
+    /**
+     * display отображает данные на экране у пользователя
+     * инициализируется позже, когда интерфес будет готов.
+    */
+    private lateinit var display: TextView
+    /**
+     * Метод, который вызывается при создании активности.
+     * Устанавливает макет и инициализирует основные компоненты.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        val display = findViewById<TextView>(R.id.display)
-
-        val buttonResult = findViewById<Button>(R.id.buttonOtv)
-        buttonResult.setOnClickListener {
-            onButtonResultClicked()
+        //это ранее вызванная перменная
+        display = findViewById(R.id.display)
+        calculatorViewModel.temporaryValue.observe(this, Observer { value ->
+            display.text = value
+        })
+        // Это функция обработчиков кнопок
+        setupButtons()
+    }
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        // Сохраняем текущее значение временного числа
+        outState.putString("temporaryValue", calculatorViewModel.temporaryValue.value)
+        // Сохраняем другие нужные данные
+    }
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        // Восстанавливаем сохранённые значения
+        val savedTemporaryValue = savedInstanceState.getString("temporaryValue")
+        if (savedTemporaryValue != null) {
+            calculatorViewModel.temporaryValue.value = savedTemporaryValue
         }
+    }
 
-        val buttonPlus = findViewById<Button>(R.id.buttonPlus)
-        buttonPlus.setOnClickListener {
-            onButtonWithSignClicked("+")
-        }
+    /**
+     * Метод для настройки обработчиков событий для кнопок калькулятора.
+     * Связывает кнопки с соответствующими методами.
+     */
+    private fun setupButtons() {
+        findViewById<Button>(R.id.buttonOtv).setOnClickListener { onButtonResultClicked() }
+        findViewById<Button>(R.id.buttonPlus).setOnClickListener { onButtonWithSignClicked("+") }
+        findViewById<Button>(R.id.buttonMinus).setOnClickListener { onButtonWithSignClicked("-") }
+        findViewById<Button>(R.id.buttondivide).setOnClickListener { onButtonWithSignClicked("/") }
+        findViewById<Button>(R.id.buttonmultiply).setOnClickListener { onButtonWithSignClicked("*") }
+        findViewById<Button>(R.id.buttonplusandminus).setOnClickListener { onPlusOrMinusButtonClicked() }
+        findViewById<Button>(R.id.buttonzp).setOnClickListener { onCommaButtonClicked() }
+        findViewById<Button>(R.id.buttonAC).setOnClickListener { resetCalculator() }
+        findViewById<Button>(R.id.buttonpercent).setOnClickListener { onButtonPercentClicked() }
+        //функция кнопок с числами
+        setupNumberButtons()
+    }
 
-        val buttonMinus = findViewById<Button>(R.id.buttonMinus)
-        buttonMinus.setOnClickListener {
-            onButtonWithSignClicked("-")
-        }
-
-        val buttonDivide = findViewById<Button>(R.id.buttondivide)
-        buttonDivide.setOnClickListener {
-            onButtonWithSignClicked("/")
-        }
-
-        val buttonMultiply = findViewById<Button>(R.id.buttonmultiply)
-        buttonMultiply.setOnClickListener {
-            onButtonWithSignClicked("*")
-        }
-
-        val buttonPlusOrMinus = findViewById<Button>(R.id.buttonplusandminus)
-        buttonPlusOrMinus.setOnClickListener {
-            onPlusOrMinusButtonClicked()
-        }
-
-        val buttonComma = findViewById<Button>(R.id.buttonzp)
-        buttonComma.setOnClickListener {
-            onCommaButtonClicked()
-        }
-
-        val buttonAC = findViewById<Button>(R.id.buttonAC)
-        buttonAC.setOnClickListener {
-            resetCalculator(display)
-        }
-
-        val buttonPercent = findViewById<Button>(R.id.buttonpercent)
-        buttonPercent.setOnClickListener {
-            onButtonPercentClicked()
-        }
-
-        val buttonNumber0 = findViewById<Button>(R.id.buttonnull)
-        buttonNumber0.setOnClickListener {
-            onNumberButtonClicked("0")
-        }
-
-        val buttonNumber1 = findViewById<Button>(R.id.buttonNumber1)
-        buttonNumber1.setOnClickListener {
-            onNumberButtonClicked("1")
-        }
-
-        val buttonNumber2 = findViewById<Button>(R.id.buttonNumber2)
-        buttonNumber2.setOnClickListener {
-            onNumberButtonClicked("2")
-        }
-
-        val buttonNumber3 = findViewById<Button>(R.id.buttonNumber3)
-        buttonNumber3.setOnClickListener {
-            onNumberButtonClicked("3")
-        }
-
-        val buttonNumber4 = findViewById<Button>(R.id.buttonNumber4)
-        buttonNumber4.setOnClickListener {
-            onNumberButtonClicked("4")
-        }
-
-        val buttonNumber5 = findViewById<Button>(R.id.buttonNumber5)
-        buttonNumber5.setOnClickListener {
-            onNumberButtonClicked("5")
-        }
-
-        val buttonNumber6 = findViewById<Button>(R.id.buttonNumber6)
-        buttonNumber6.setOnClickListener {
-            onNumberButtonClicked("6")
-        }
-
-        val buttonNumber7 = findViewById<Button>(R.id.buttonNumber7)
-        buttonNumber7.setOnClickListener {
-            onNumberButtonClicked("7")
-        }
-
-        val buttonNumber8 = findViewById<Button>(R.id.buttonNumber8)
-        buttonNumber8.setOnClickListener {
-            onNumberButtonClicked("8")
-        }
-
-        val buttonNumber9 = findViewById<Button>(R.id.buttonnumber9)
-        buttonNumber9.setOnClickListener {
-            onNumberButtonClicked("9")
+    private fun setupNumberButtons() {
+        val numberButtons = listOf(
+            R.id.buttonnull to "0",
+            R.id.buttonNumber1 to "1",
+            R.id.buttonNumber2 to "2",
+            R.id.buttonNumber3 to "3",
+            R.id.buttonNumber4 to "4",
+            R.id.buttonNumber5 to "5",
+            R.id.buttonNumber6 to "6",
+            R.id.buttonNumber7 to "7",
+            R.id.buttonNumber8 to "8",
+            R.id.buttonnumber9 to "9"
+        )
+        // Для каждой кнопки устанавливаю обработчик нажатия
+        for ((buttonId, number) in numberButtons) {
+            findViewById<Button>(buttonId).setOnClickListener {
+                // Метод для обработки нажатия на кнопку с числом
+                onNumberButtonClicked(number)
+            }
         }
     }
 
     private fun onNumberButtonClicked(number: String) {
-        val display = findViewById<TextView>(R.id.display)
-        if (temporaryValue.length < 9) {
-            if (temporaryValue == "0" || temporaryValue == "-0") {
-                temporaryValue = if (temporaryValue == "-0") "-$number" else number
+        // Получаем текущее значение из ViewModel. Если его нет, используем "0"
+        val currentValue = calculatorViewModel.temporaryValue.value ?: "0"
+        // Проверяем, чтобы длина числа не превышала 9 символов
+        if (currentValue.length < 9) {
+            val updatedValue = if (currentValue == "0" || currentValue == "-0") {
+                // Если текущее значение "0" или "-0", заменяем его на новое число
+                if (currentValue == "-0") "-$number" else number
             } else {
-                temporaryValue += number
+                // Иначе просто добавляем новое число к текущему значению
+                currentValue + number
             }
+            // Обновляем значение в ViewModel
+            calculatorViewModel.temporaryValue.value = updatedValue
         }
-        display.text = temporaryValue
     }
-
+    // Метод для обработки нажатия на кнопку запятой
     private fun onCommaButtonClicked() {
-        if (!temporaryValue.contains(".")) {
-            temporaryValue += "."
+        val currentValue = calculatorViewModel.temporaryValue.value ?: "0"
+        // Если в числе ещё нет запятой, добавляем её
+        if (!currentValue.contains(".")) {
+            calculatorViewModel.temporaryValue.value = "$currentValue."
         }
-        val display = findViewById<TextView>(R.id.display)
-        display.text = temporaryValue
     }
-
+    // Метод для обработки нажатия на кнопку "+/-" (смена знака числа)
     private fun onPlusOrMinusButtonClicked() {
-        val display = findViewById<TextView>(R.id.display)
-        temporaryValue = if (temporaryValue.startsWith("-")) {
-            temporaryValue.drop(1)
+        val currentValue = calculatorViewModel.temporaryValue.value ?: "0"
+        // Меняем знак числа
+        val updatedValue = if (currentValue.startsWith("-")) {
+            currentValue.drop(1)    // Убираем знак минус
         } else {
-            "-$temporaryValue"
+            "-$currentValue"    // Добавляем знак минус
         }
-        display.text = temporaryValue
+        calculatorViewModel.temporaryValue.value = updatedValue
     }
 
     private fun onButtonWithSignClicked(sign: String) {
-        if (temporaryValue.isNotEmpty()) {
-            firstValueEntered = temporaryValue
-            signSelectionVariable = sign
-            temporaryValue = "0"
-        }
+        calculatorViewModel.firstValueEntered.value = calculatorViewModel.temporaryValue.value
+        calculatorViewModel.signSelectionVariable.value = sign
+        calculatorViewModel.temporaryValue.value = "0"
     }
 
     private fun onButtonPercentClicked() {
-        val display = findViewById<TextView>(R.id.display)
-        if (firstValueEntered.isNotEmpty() && signSelectionVariable.isNotEmpty()) {
-            val secondValue = temporaryValue.toDoubleOrNull() ?: return
-            val percentValue = (firstValueEntered.toDouble() * secondValue) / 100
-            temporaryValue = percentValue.toString()
-            display.text = temporaryValue
+        // Если есть первое введённое значение и операция, выполняем расчет в контексте операции
+        if (calculatorViewModel.firstValueEntered.value?.isNotEmpty() == true && calculatorViewModel.signSelectionVariable.value?.isNotEmpty() == true) {
+            // Пробуем преобразовать временное значение (второе число) в BigDecimal
+            val secondValue = calculatorViewModel.temporaryValue.value?.toBigDecimalOrNull() ?: return
+            // Преобразуем первое значение в BigDecimal
+            val firstValue = calculatorViewModel.firstValueEntered.value?.toBigDecimalOrNull() ?: return
+            // Вычисляем процентное значение
+            val percentValue = (firstValue * secondValue).divide(BigDecimal(100), 10, RoundingMode.HALF_UP)
+            // Обновляем временное значение и текст на экране
+            calculatorViewModel.temporaryValue.value = percentValue.stripTrailingZeros().toPlainString()
         } else {
-            val value = temporaryValue.toDoubleOrNull() ?: return
-            temporaryValue = (value / 100).toString()
-            display.text = formatNumber(temporaryValue)
+            // Если операция не выбрана, просто рассчитываем процент от текущего числа
+            val value = calculatorViewModel.temporaryValue.value?.toBigDecimalOrNull() ?: return
+            // Делим текущее число на 100 и округляем
+            val percentValue = value.divide(BigDecimal(100), 10, RoundingMode.HALF_UP)
+            // Обновляем временное значение и текст на экране
+            calculatorViewModel.temporaryValue.value = percentValue.stripTrailingZeros().toPlainString()
         }
     }
 
     private fun onButtonResultClicked() {
-        val display = findViewById<TextView>(R.id.display)
-        if (firstValueEntered.isNotEmpty() && signSelectionVariable.isNotEmpty()) {
-            val result = when (signSelectionVariable) {
-                "+" -> firstValueEntered.toDouble() + temporaryValue.toDouble()
-                "-" -> firstValueEntered.toDouble() - temporaryValue.toDouble()
-                "*" -> firstValueEntered.toDouble() * temporaryValue.toDouble()
-                "/" -> {
-                    if (temporaryValue.toDouble() == 0.0) {
-                        display.text = "Ошибка"
-                        return
-                    } else {
-                        firstValueEntered.toDouble() / temporaryValue.toDouble()
-                    }
-                }
-                else -> 0.0
+        val firstValue = calculatorViewModel.firstValueEntered.value?.toDoubleOrNull() ?: return
+        val secondValue = calculatorViewModel.temporaryValue.value?.toDoubleOrNull() ?: return
+        val sign = calculatorViewModel.signSelectionVariable.value ?: return
+
+        val result = when (sign) {
+            "+" -> firstValue + secondValue
+            "-" -> firstValue - secondValue
+            "*" -> firstValue * secondValue
+            "/" -> if (secondValue != 0.0) firstValue / secondValue else {
+                display.text = "Ошибка"
+                return
             }
-            temporaryValue = result.toString()
-            display.text = formatNumber(temporaryValue)
-            signSelectionVariable = ""
+            else -> return
         }
+        calculatorViewModel.temporaryValue.value = result.toString()
     }
 
-    private fun resetCalculator(display: TextView) {
-        display.text = "0"
-        temporaryValue = "0"
-        firstValueEntered = ""
-        signSelectionVariable = ""
+    private fun resetCalculator() {
+        calculatorViewModel.temporaryValue.value = "0"
+        calculatorViewModel.firstValueEntered.value = ""
+        calculatorViewModel.signSelectionVariable.value = ""
     }
 
     private fun formatNumber(value: String): String {
