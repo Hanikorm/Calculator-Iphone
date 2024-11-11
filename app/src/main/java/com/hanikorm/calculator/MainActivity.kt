@@ -32,10 +32,11 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.buttonzp).setOnClickListener { onCommaButtonClicked() }
         findViewById<Button>(R.id.buttonAC).setOnClickListener { calculatorViewModel.resetCalculator() }
         findViewById<Button>(R.id.buttonpercent).setOnClickListener { onButtonPercentClicked() }
-        findViewById<TextView>(R.id.display).setOnClickListener { calculatorViewModel.deleteLastDigit() }
+        findViewById<TextView>(R.id.display).setOnClickListener { deleteLastDigit() }
 
         setupNumberButtons()
     }
+
 
     private fun setupNumberButtons() {
         val numberButtons = listOf(
@@ -57,7 +58,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
+    private fun deleteLastDigit() {
+        val currentValue = calculatorViewModel.temporaryValue.value ?: "0"
+        val newValue = if (currentValue.length > 1) {
+            currentValue.dropLast(1)
+        } else {
+            "0"
+        }
+        calculatorViewModel.updateTemporaryValue(newValue)
+    }
     private fun onNumberButtonClicked(number: String) {
         val currentValue = calculatorViewModel.temporaryValue.value ?: "0"
         if (currentValue.length < 9) {
@@ -120,14 +129,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun formatNumber(value: String): String {
-        val number = value.toDoubleOrNull() ?: return "Ошибка"
-        val formattedValue = if (value.contains(".") && value.length > 9) {
-            String.format("%.5E", number)
-        } else if (!value.contains(".") && value.length > 9) {
-            String.format("%.5E", number)
+        val number = value.toDouble()
+        return if (number % 1 == 0.0) {
+            number.toInt().toString()
         } else {
             String.format("%.10f", number).trimEnd('0').trimEnd('.')
         }
-        return formattedValue
     }
 }
