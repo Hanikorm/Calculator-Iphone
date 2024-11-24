@@ -8,16 +8,19 @@ import java.math.RoundingMode
 
 class CalculatorViewModel : ViewModel() {
     // MutableLiveData для временного значения, введенного пользователем
-    private var _firstValueEntered = MutableLiveData("0")
+    private var _firstValueEntered = ("0")
     // MutableLiveData для первого значения, введенного пользователем
-    private var _secondValueEntered = MutableLiveData("")
+    private var _secondValueEntered = ("")
     // MutableLiveData для знака (+, -, *, /), выбранного пользователем
-    private var _signSelectionVariable = MutableLiveData("")
+    private var _signSelectionVariable = ("")
     // MutableLiveData для текста, отображаемого на экране калькулятора
     private var _displayText = MutableLiveData("0")
 
+
+
+
     // LiveData для доступа к временному значению
-    val firstValueEntered: LiveData<String> = _firstValueEntered
+    val displayText: LiveData<String> = _displayText
 
     // Вызывается при нажатии кнопки с числом
     // Добавляет нажатое число к текущему значению
@@ -61,7 +64,7 @@ class CalculatorViewModel : ViewModel() {
                 updateSign(sign)
             }
         }
-        _firstValueEntered.value = "0"
+        displayText.value = "0"
     }
 
     // Вызывается при нажатии кнопки процента

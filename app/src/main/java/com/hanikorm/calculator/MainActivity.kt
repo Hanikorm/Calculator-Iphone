@@ -13,7 +13,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         display = findViewById(R.id.display)
-        calculatorViewModel.firstValueEntered.observe(this) { value -> display.text = value }
+        calculatorViewModel.displayText.observe(this) { value -> display.text = value }
         setupButtons()
     }
 
