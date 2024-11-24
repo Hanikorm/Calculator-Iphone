@@ -5,8 +5,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.viewModels
-import java.math.BigDecimal
-import java.math.RoundingMode
+
 
 class MainActivity : AppCompatActivity() {
     private val calculatorViewModel: CalculatorViewModel by viewModels()
@@ -17,7 +16,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         display = findViewById(R.id.display)
-        calculatorViewModel.temporaryValue.observe(this) { value -> display.text = value }
+        calculatorViewModel.firstValueEntered.observe(this) { value -> display.text = value }
 
 
         setupButtons()
