@@ -8,11 +8,11 @@ import java.math.RoundingMode
 
 class CalculatorViewModel : ViewModel() {
     //  для временного значения, введенного пользователем
-    private var _firstValueEntered = "0"
+    private var firstValueEntered = "0"
     //  для первого значения, введенного пользователем
-    private var _secondValueEntered = ""
+    private var secondValueEntered = ""
     //  для знака (+, -, *, /), выбранного пользователем
-    private var _signSelectionVariable = ""
+    private var signSelectionVariable = ""
     // MutableLiveData для текста, отображаемого на экране калькулятора
     private var _displayText = MutableLiveData("0")
 
@@ -39,7 +39,7 @@ class CalculatorViewModel : ViewModel() {
     // Вызывается при нажатии кнопки с запятой
     // Добавляет десятичную точку к текущему значению, если она отсутствует
     fun onCommaButtonClicked() {
-        val currentValue = _firstValueEntered ?: "0"
+        val currentValue = firstValueEntered ?: "0"
         if (!currentValue.contains(".") && currentValue.length <= 9) {
             _displayText.value = "$currentValue."
         }
@@ -48,7 +48,7 @@ class CalculatorViewModel : ViewModel() {
     // Вызывается при нажатии кнопки плюс/минус
     // Переключает знак текущего значения
     fun onPlusOrMinusButtonClicked() {
-        val currentValue = _firstValueEntered ?: "0"
+        val currentValue = firstValueEntered ?: "0"
         val updatedValue = if (currentValue.startsWith("-")) currentValue.drop(1) else "-$currentValue"
         _displayText.value = updatedValue
     }
@@ -56,11 +56,11 @@ class CalculatorViewModel : ViewModel() {
     // Вызывается при нажатии кнопки с знаком (+, -, *, /)
     // Обновляет выбранный знак и сбрасывает отображаемый текст
     fun onButtonWithSignClicked(sign: String) {
-        if (_firstValueEntered.isNotEmpty()) {
-            if (_secondValueEntered.isNotEmpty() && _signSelectionVariable.isNotEmpty()) {
+        if (firstValueEntered.isNotEmpty()) {
+            if (secondValueEntered.isNotEmpty() && signSelectionVariable.isNotEmpty()) {
                 updateSign(sign)
             } else {
-                updateFirstValue(_firstValueEntered ?: "0")
+                updateFirstValue(firstValueEntered ?: "0")
                 updateSign(sign)
             }
         }
@@ -70,8 +70,8 @@ class CalculatorViewModel : ViewModel() {
     // Вызывается при нажатии кнопки процента
     // Вычисляет процент от текущего значения
     fun onButtonPercentClicked() {
-        val firstValue = _firstValueEntered.toBigDecimalOrNull() ?: return
-        val secondValue = _secondValueEntered.toBigDecimalOrNull() ?: return
+        val firstValue = firstValueEntered.toBigDecimalOrNull() ?: return
+        val secondValue = secondValueEntered.toBigDecimalOrNull() ?: return
         val percentValue = (firstValue * secondValue).divide(BigDecimal(100), 10, RoundingMode.HALF_UP)
         _displayText.value = percentValue.stripTrailingZeros().toPlainString()
     }
@@ -79,9 +79,9 @@ class CalculatorViewModel : ViewModel() {
     // Вызывается при нажатии кнопки результата
     // Вычисляет результат текущей операции
     fun onButtonResultClicked() {
-        val firstValue = _secondValueEntered.toDoubleOrNull() ?: return
-        val secondValue = _firstValueEntered.toDoubleOrNull() ?: return
-        val sign = _signSelectionVariable ?: return
+        val firstValue = secondValueEntered.toDoubleOrNull() ?: return
+        val secondValue = firstValueEntered.toDoubleOrNull() ?: return
+        val sign = signSelectionVariable ?: return
         val result = when (sign) {
             "+" -> firstValue + secondValue
             "-" -> firstValue - secondValue
@@ -97,7 +97,7 @@ class CalculatorViewModel : ViewModel() {
 
     // Удаляет последнюю цифру с экрана
     fun deleteLastDigit() {
-        val currentValue = _firstValueEntered ?: "0"
+        val currentValue = firstValueEntered ?: "0"
         val newValue = if (currentValue.length > 1) {
             currentValue.dropLast(1)
         } else {
@@ -108,20 +108,20 @@ class CalculatorViewModel : ViewModel() {
 
     // Сбрасывает калькулятор в начальное состояние
     fun resetCalculator() {
-        _firstValueEntered = "0"
-        _secondValueEntered = ""
-        _signSelectionVariable = ""
+        firstValueEntered = "0"
+        secondValueEntered = ""
+        signSelectionVariable = ""
         _displayText.value = "0"
     }
 
     // Обновляет первое введенное значение
     private fun updateFirstValue(value: String) {
-        _secondValueEntered = value
+        secondValueEntered = value
     }
 
     // Обновляет выбранный знак
     private fun updateSign(value: String) {
-        _signSelectionVariable = value
+        signSelectionVariable = value
     }
 
     // Форматирует число, удаляя ненужные десятичные знаки
