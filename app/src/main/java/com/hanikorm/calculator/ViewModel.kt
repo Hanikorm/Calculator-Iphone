@@ -7,11 +7,11 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 class CalculatorViewModel : ViewModel() {
-    // MutableLiveData для временного значения, введенного пользователем
+    //  для временного значения, введенного пользователем
     private var _firstValueEntered = "0"
-    // MutableLiveData для первого значения, введенного пользователем
+    //  для первого значения, введенного пользователем
     private var _secondValueEntered = ""
-    // MutableLiveData для знака (+, -, *, /), выбранного пользователем
+    //  для знака (+, -, *, /), выбранного пользователем
     private var _signSelectionVariable = ""
     // MutableLiveData для текста, отображаемого на экране калькулятора
     private var _displayText = MutableLiveData("0")
