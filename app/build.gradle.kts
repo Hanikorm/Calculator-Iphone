@@ -42,5 +42,7 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.core.ktx)
+    testImplementation(libs.junit.junit)
+    testImplementation(libs.junit.junit)
 
 }
