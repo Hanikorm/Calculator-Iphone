@@ -1,5 +1,4 @@
 package com.hanikorm.calculator
-
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
@@ -10,15 +9,11 @@ import androidx.activity.viewModels
 class MainActivity : AppCompatActivity() {
     private val calculatorViewModel: CalculatorViewModel by viewModels()
     private lateinit var display: TextView
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         display = findViewById(R.id.display)
         calculatorViewModel.firstValueEntered.observe(this) { value -> display.text = value }
-
-
         setupButtons()
     }
 
@@ -33,7 +28,6 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.buttonAC).setOnClickListener { calculatorViewModel.resetCalculator() }
         findViewById<Button>(R.id.buttonpercent).setOnClickListener { calculatorViewModel.onButtonPercentClicked() }
         findViewById<TextView>(R.id.display).setOnClickListener { calculatorViewModel.deleteLastDigit() }
-
         setupNumberButtons()
     }
 
