@@ -7,23 +7,16 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 class CalculatorViewModel : ViewModel() {
-    //  для временного значения, введенного пользователем
     private var firstValueEntered = "0"
-    //  для первого значения, введенного пользователем
     private var secondValueEntered = ""
-    //  для знака (+, -, *, /), выбранного пользователем
     private var signSelectionVariable = ""
-    // флаг для определения, нужно ли начать ввод нового числа
     private var needNewNumber = false
-    // Сохраняем последнее введенное число для повторных операций
     private var lastNumber = ""
-    // Сохраняем последнюю операцию
     private var lastOperation = ""
 
     private var _displayText = MutableLiveData("0")
     val displayText: LiveData<String> = _displayText
 
-    // Вызывается при нажатии кнопки с числом
     fun onNumberButtonClicked(number: String) {
         if (needNewNumber) {
             firstValueEntered = number
@@ -37,7 +30,6 @@ class CalculatorViewModel : ViewModel() {
         _displayText.value = firstValueEntered
     }
 
-    // Вызывается при нажатии кнопки с запятой
     fun onCommaButtonClicked() {
         if (needNewNumber) {
             firstValueEntered = "0."
@@ -48,7 +40,6 @@ class CalculatorViewModel : ViewModel() {
         _displayText.value = firstValueEntered
     }
 
-    // Вызывается при нажатии кнопки плюс/минус
     fun onPlusOrMinusButtonClicked() {
         firstValueEntered = if (firstValueEntered.startsWith("-")) {
             firstValueEntered.substring(1)
@@ -58,22 +49,16 @@ class CalculatorViewModel : ViewModel() {
         _displayText.value = firstValueEntered
     }
 
-    // Вызывается при нажатии кнопки с знаком (+, -, *, /)
     fun onButtonWithSignClicked(sign: String) {
-        if (firstValueEntered.isNotEmpty()) {
-            if (secondValueEntered.isNotEmpty() && signSelectionVariable.isNotEmpty()) {
-                secondValueEntered = firstValueEntered
-            } else {
-                updateFirstValue(_displayText.value ?: "0")
-            }
-            lastNumber = ""
-            updateSign(sign)
-            lastOperation = sign
-            needNewNumber = true
+        if (signSelectionVariable.isNotEmpty() && secondValueEntered.isNotEmpty()) {
+            onButtonResultClicked()
         }
+
+        secondValueEntered = firstValueEntered
+        signSelectionVariable = sign
+        needNewNumber = true
     }
 
-    // Вызывается при нажатии кнопки процента
     fun onButtonPercentClicked() {
         val currentValue = firstValueEntered.toDoubleOrNull() ?: return
 
@@ -90,34 +75,11 @@ class CalculatorViewModel : ViewModel() {
         needNewNumber = true
     }
 
-    // Вызывается при нажатии кнопки результата
     fun onButtonResultClicked() {
-        if (signSelectionVariable.isEmpty() && lastNumber.isNotEmpty()) {
-            val currentValue = firstValueEntered.toDoubleOrNull() ?: return
-            val lastValue = lastNumber.toDoubleOrNull() ?: return
-            val result = when (lastOperation) {
-                "+" -> currentValue + lastValue
-                "-" -> currentValue - lastValue
-                "*" -> currentValue * lastValue
-                "/" -> if (lastValue != 0.0) currentValue / lastValue else {
-                    _displayText.value = "Ошибка"
-                    resetCalculator()
-                    return
-                }
-                else -> return
-            }
-            val formattedResult = formatNumber(result.toString())
-            _displayText.value = formattedResult
-            firstValueEntered = formattedResult
-            needNewNumber = true
-            return
-        }
-        if (signSelectionVariable.isEmpty() || secondValueEntered.isEmpty()) return
+        if (signSelectionVariable.isEmpty()) return
 
         val firstValue = secondValueEntered.toDoubleOrNull() ?: return
         val secondValue = firstValueEntered.toDoubleOrNull() ?: return
-        lastNumber = firstValueEntered
-        lastOperation = signSelectionVariable
 
         val result = when (signSelectionVariable) {
             "+" -> firstValue + secondValue
@@ -134,6 +96,7 @@ class CalculatorViewModel : ViewModel() {
         val formattedResult = formatNumber(result.toString())
         _displayText.value = formattedResult
         firstValueEntered = formattedResult
+        secondValueEntered = ""
         signSelectionVariable = ""
         needNewNumber = true
     }
@@ -149,6 +112,8 @@ class CalculatorViewModel : ViewModel() {
     }
 
     fun deleteLastDigit() {
+        if (needNewNumber) return
+
         firstValueEntered = if (firstValueEntered.length > 1) {
             firstValueEntered.dropLast(1)
         } else {
@@ -159,10 +124,6 @@ class CalculatorViewModel : ViewModel() {
 
     private fun updateFirstValue(value: String) {
         secondValueEntered = value
-    }
-
-    private fun updateSign(value: String) {
-        signSelectionVariable = value
     }
 
     private fun formatNumber(value: String): String {
