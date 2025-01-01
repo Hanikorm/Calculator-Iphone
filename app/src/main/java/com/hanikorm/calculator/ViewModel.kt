@@ -13,78 +13,111 @@ class CalculatorViewModel : ViewModel() {
     private var secondValueEntered = ""
     //  для знака (+, -, *, /), выбранного пользователем
     private var signSelectionVariable = ""
-    // MutableLiveData для текста, отображаемого на экране калькулятора
+    // флаг для определения, нужно ли начать ввод нового числа
+    private var needNewNumber = false
+    // Сохраняем последнее введенное число для повторных операций
+    private var lastNumber = ""
+    // Сохраняем последнюю операцию
+    private var lastOperation = ""
+
     private var _displayText = MutableLiveData("0")
-
-
-
-
-    // LiveData для доступа к временному значению
     val displayText: LiveData<String> = _displayText
 
     // Вызывается при нажатии кнопки с числом
-    // Добавляет нажатое число к текущему значению
     fun onNumberButtonClicked(number: String) {
-        val currentValue = _displayText.value ?: "0"
-        if (currentValue.length < 9) {
-            val updatedValue = if (currentValue == "0" || currentValue == "-0") {
-                if (currentValue == "-0") "-$number" else number
-            } else {
-                currentValue + number
+        if (needNewNumber) {
+            firstValueEntered = number
+            needNewNumber = false
+        } else {
+            val currentValue = _displayText.value ?: "0"
+            if (currentValue.length < 9) {
+                firstValueEntered = if (currentValue == "0") number else currentValue + number
             }
-            _displayText.value = updatedValue
-            firstValueEntered = updatedValue
         }
+        _displayText.value = firstValueEntered
     }
 
     // Вызывается при нажатии кнопки с запятой
-    // Добавляет десятичную точку к текущему значению, если она отсутствует
     fun onCommaButtonClicked() {
-        val currentValue = firstValueEntered ?: "0"
-        if (!currentValue.contains(".") && currentValue.length <= 9) {
-            _displayText.value = "$currentValue."
+        if (needNewNumber) {
+            firstValueEntered = "0."
+            needNewNumber = false
+        } else if (!firstValueEntered.contains(".") && firstValueEntered.length <= 9) {
+            firstValueEntered = "$firstValueEntered."
         }
+        _displayText.value = firstValueEntered
     }
 
     // Вызывается при нажатии кнопки плюс/минус
-    // Переключает знак текущего значения
     fun onPlusOrMinusButtonClicked() {
-        val currentValue = firstValueEntered
-        val updatedValue = if (currentValue.startsWith("-")) currentValue.drop(1) else "-$currentValue"
-        _displayText.value = updatedValue
+        firstValueEntered = if (firstValueEntered.startsWith("-")) {
+            firstValueEntered.substring(1)
+        } else {
+            "-$firstValueEntered"
+        }
+        _displayText.value = firstValueEntered
     }
 
     // Вызывается при нажатии кнопки с знаком (+, -, *, /)
-    // Обновляет выбранный знак и сбрасывает отображаемый текст
     fun onButtonWithSignClicked(sign: String) {
         if (firstValueEntered.isNotEmpty()) {
             if (secondValueEntered.isNotEmpty() && signSelectionVariable.isNotEmpty()) {
-                onButtonResultClicked()
-                updateFirstValue(_displayText.value ?: "0")
+                secondValueEntered = firstValueEntered
             } else {
                 updateFirstValue(_displayText.value ?: "0")
             }
+            lastNumber = ""
             updateSign(sign)
-            _displayText.value = "0"
+            lastOperation = sign
+            needNewNumber = true
         }
     }
 
     // Вызывается при нажатии кнопки процента
-    // Вычисляет процент от текущего значения
     fun onButtonPercentClicked() {
-        val firstValue = firstValueEntered.toBigDecimalOrNull() ?: return
-        val secondValue = firstValueEntered.toBigDecimalOrNull() ?: return
-        val percentValue = (firstValue * secondValue).divide(BigDecimal(100), 10, RoundingMode.HALF_UP)
-        _displayText.value = percentValue.stripTrailingZeros().toPlainString()
+        val currentValue = firstValueEntered.toDoubleOrNull() ?: return
+
+        val result = if (secondValueEntered.isEmpty()) {
+            currentValue / 100.0
+        } else {
+            val baseValue = secondValueEntered.toDoubleOrNull() ?: return
+            (baseValue * currentValue) / 100.0
+        }
+
+        val formattedResult = formatNumber(result.toString())
+        _displayText.value = formattedResult
+        firstValueEntered = formattedResult
+        needNewNumber = true
     }
 
     // Вызывается при нажатии кнопки результата
-    // Вычисляет результат текущей операции
     fun onButtonResultClicked() {
+        if (signSelectionVariable.isEmpty() && lastNumber.isNotEmpty()) {
+            val currentValue = firstValueEntered.toDoubleOrNull() ?: return
+            val lastValue = lastNumber.toDoubleOrNull() ?: return
+            val result = when (lastOperation) {
+                "+" -> currentValue + lastValue
+                "-" -> currentValue - lastValue
+                "*" -> currentValue * lastValue
+                "/" -> if (lastValue != 0.0) currentValue / lastValue else {
+                    _displayText.value = "Ошибка"
+                    resetCalculator()
+                    return
+                }
+                else -> return
+            }
+            val formattedResult = formatNumber(result.toString())
+            _displayText.value = formattedResult
+            firstValueEntered = formattedResult
+            needNewNumber = true
+            return
+        }
         if (signSelectionVariable.isEmpty() || secondValueEntered.isEmpty()) return
 
         val firstValue = secondValueEntered.toDoubleOrNull() ?: return
         val secondValue = firstValueEntered.toDoubleOrNull() ?: return
+        lastNumber = firstValueEntered
+        lastOperation = signSelectionVariable
 
         val result = when (signSelectionVariable) {
             "+" -> firstValue + secondValue
@@ -98,39 +131,40 @@ class CalculatorViewModel : ViewModel() {
             else -> return
         }
 
-        _displayText.value = formatNumber(result.toString())
-        firstValueEntered = _displayText.value ?: "0"
-    }
-    // Удаляет последнюю цифру с экрана
-    fun deleteLastDigit() {
-        val currentValue = firstValueEntered ?: "0"
-        val newValue = if (currentValue.length > 1) {
-            currentValue.dropLast(1)
-        } else {
-            "0"
-        }
-        _displayText.value = newValue
+        val formattedResult = formatNumber(result.toString())
+        _displayText.value = formattedResult
+        firstValueEntered = formattedResult
+        signSelectionVariable = ""
+        needNewNumber = true
     }
 
-    // Сбрасывает калькулятор в начальное состояние
     fun resetCalculator() {
         firstValueEntered = "0"
         secondValueEntered = ""
         signSelectionVariable = ""
+        lastNumber = ""
+        lastOperation = ""
+        needNewNumber = false
         _displayText.value = "0"
     }
 
-    // Обновляет первое введенное значение
+    fun deleteLastDigit() {
+        firstValueEntered = if (firstValueEntered.length > 1) {
+            firstValueEntered.dropLast(1)
+        } else {
+            "0"
+        }
+        _displayText.value = firstValueEntered
+    }
+
     private fun updateFirstValue(value: String) {
         secondValueEntered = value
     }
 
-    // Обновляет выбранный знак
     private fun updateSign(value: String) {
         signSelectionVariable = value
     }
 
-    // Форматирует число, удаляя ненужные десятичные знаки
     private fun formatNumber(value: String): String {
         val number = value.toDouble()
         return if (number % 1 == 0.0) {
